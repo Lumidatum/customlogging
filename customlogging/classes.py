@@ -5,6 +5,7 @@ import decorators
 class LoggingWrapper(object):
 
     # Exclude __init__ by default...
+    # Local plain text file by default...
     config = {
         'exclude': set('__init__'),
         'include': set(),
