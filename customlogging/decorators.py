@@ -2,6 +2,8 @@ from functools import wraps
 import datetime
 import logging
 
+import constants
+
 
 def functionLoggingDecorator(func, selected_logger):
     @wraps(func)
@@ -23,8 +25,9 @@ def functionLoggingDecorator(func, selected_logger):
 # TODO, this modifies the class itself, -> on next call it will wrap the wrapped class...
 def classLoggingDecorator(cls, config):
     # TODO: switch function decorators based on config
-    selected_decorator = functionLoggingDecorator
-    selected_logger = logging
+    if config['output_type'] == constants.LOCAL_PAIN_TEXT_FILE:
+        selected_decorator = functionLoggingDecorator
+        selected_logger = logging
     # Setup logger as needed...
 
     for attr in cls.__dict__:

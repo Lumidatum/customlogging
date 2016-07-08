@@ -7,7 +7,8 @@ class LoggingWrapper(object):
     # Exclude __init__ by default...
     config = {
         'exclude': set('__init__'),
-        'include': set()
+        'include': set(),
+        'output_type': constants.LOCAL_PLAIN_TEXT_FILE,
     }
 
     @classmethod
@@ -37,15 +38,15 @@ class LoggingWrapper(object):
         # NoSQL
         # CouchDB
         if couch_db_config:
-            cls.config = {'output_type': constants.REMOTE_COUCH_DB}
+            cls.config['output_type'] = constants.REMOTE_COUCH_DB
 
         # JSON file
         elif output_json_file:
-            cls.config = {'output_type': constants.LOCAL_JSON_FILE}
+            cls.config['output_type'] constants.LOCAL_JSON_FILE
 
         # sqllite3 file
         elif output_sqllite3_location:
-            cls.config = {'output_type': constants.LOCAL_SQLLITE3}
+            cls.config['output_type'] constants.LOCAL_SQLLITE3
 
         # Amazon S3
         # Plain text file
@@ -58,7 +59,7 @@ class LoggingWrapper(object):
 
         # Default to local output text file
         else:
-            cls.config = {'output_type': constants.LOCAL_PLAIN_TEXT_FILE}
+            cls.config['output_type'] =constants.LOCAL_PLAIN_TEXT_FILE
 
     # TODO: expose methods with appropriate names
     # TODO: 
