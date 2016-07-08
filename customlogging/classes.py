@@ -11,7 +11,7 @@ class LoggingWrapper(object):
     }
 
     @classmethod
-    def setupWrapper(
+    def setup(
         cls,
         couch_db_config=None,
         output_text_file=None,
@@ -27,12 +27,12 @@ class LoggingWrapper(object):
         # Method exclusion takes priority if both are provided.
         if exclude_methods:
             for method in exclude_methods:
-                config['exclude'].add(method)
-            config['include'] = set()
+                cls.config['exclude'].add(method)
+            cls.config['include'] = set()
         elif include_methods:
             for method in include_methods:
-                config['include'].add(method)
-            config['exclude'] = set()
+                cls.config['include'].add(method)
+            cls.config['exclude'] = set()
 
         # NoSQL
         # CouchDB
