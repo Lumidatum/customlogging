@@ -2,9 +2,11 @@ from functools import wraps
 import datetime
 import json
 import logging
+import multiprocessing
 import os
 import uuid
 
+# import grequests
 import requests
 
 import constants
@@ -32,18 +34,28 @@ def couchLoggingDecorator(func, config):
             'kwargs': kwargs_string,
             'start': helpers.generateUtcNowTimeStampString(),
         }
-        response = requests.post(url_for_model_call_start, data=json.dumps(logging_message))
+
+        logging_start_proc = multiprocessing.Process(
+            target=helpers.sendLoggingMessage,
+            args=(requests.post, url_for_model_call_start, logging_message)
+        )
+        logging_start_proc.start()
+        # print logging_message
 
         results = func(*args, **kwargs)
 
         url_for_model_call_end = os.path.join(url_for_model_call_start, logging_message_id_string)
 
-        # TODO: wrap second logging action in try/except
         # log to couch end, time
         logging_end_id_string = str(uuid.uuid4())
         logging_message['end'] = helpers.generateUtcNowTimeStampString()
 
-        response = requests.put(url_for_model_call_end, data=json.dumps(logging_message))
+        logging_end_proc = multiprocessing.Process(
+            target=helpers.sendLoggingMessage,
+            args=(requests.put, url_for_model_call_end, logging_message)
+        )
+        logging_end_proc.start()
+        # print logging_message['end']
 
         return results
 
@@ -88,7 +100,7 @@ def classLoggingDecorator(cls, config):
 # class thing(object):
 #     def __init__(self, a):
 #         self.a = a
-#     def yo(self, b):
+#     def somefunc(self, b):
 #         print "yoarr", self.a, b
 
 # import customlogging.classes
@@ -99,3 +111,4 @@ def classLoggingDecorator(cls, config):
 # }
 # customlogging.classes.LoggingWrapper.setup('85', '125', couch_db_config=config)
 # testobj = customlogging.classes.LoggingWrapper(thing, customlogging.decorators.couchLoggingDecorator, '123')
+# testobj.somefunc('some message')
