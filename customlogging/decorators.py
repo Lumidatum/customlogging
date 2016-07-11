@@ -19,7 +19,7 @@ def couchLoggingDecorator(func, config):
         kwargs_string = repr(kwargs)
 
         # pull necessary info from config
-        remote_host = 'http://ec2-52-41-176-213.us-west-2.compute.amazonaws.com:5984'
+        remote_host = config['remote_host']
         database = 'user_{}_model_{}'.format(config['lumidatum_user_id'], config['lumidatum_model_id'])
 
         url_for_model_call_start = os.path.join(remote_host, database)
@@ -95,7 +95,7 @@ def classLoggingDecorator(cls, config):
 # import customlogging.decorators
 
 # config = {
-#     'remote_host': 'ec2-52-41-176-213.us-west-2.compute.amazonaws.com:5984'
+#     'remote_host': 'http://ec2-52-41-176-213.us-west-2.compute.amazonaws.com:5984'
 # }
 # customlogging.classes.LoggingWrapper.setup('85', '125', couch_db_config=config)
 # testobj = customlogging.classes.LoggingWrapper(thing, customlogging.decorators.couchLoggingDecorator, '123')
