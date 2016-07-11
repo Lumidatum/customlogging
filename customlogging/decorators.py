@@ -13,7 +13,7 @@ import constants
 import helpers
 
 
-def couchLoggingDecorator(func, config):
+def couchDBLogging(func, config):
     @wraps(func)
     def wrapper(*args, **kwargs):
         try:
@@ -22,7 +22,7 @@ def couchLoggingDecorator(func, config):
 
             # pull necessary info from config
             remote_host = config['remote_host']
-            database = 'user_{}_model_{}'.format(config['lumidatum_user_id'], config['lumidatum_model_id'])
+            database = config['database']
 
             url_for_model_call_start = os.path.join(remote_host, database)
 
@@ -66,7 +66,7 @@ def couchLoggingDecorator(func, config):
 
     return wrapper
 
-def functionLoggingDecorator(func, config):
+def pythonLogging(func, config):
     @wraps(func)
     def wrapper(*args, **kwargs):
         string_args = repr(args)
@@ -97,5 +97,5 @@ def functionLoggingDecorator(func, config):
 #     'remote_host': 'http://ec2-52-41-176-213.us-west-2.compute.amazonaws.com:5984'
 # }
 # customlogging.classes.LoggingWrapper.setup('85', '125', couch_db_config=config)
-# testobj = customlogging.classes.LoggingWrapper(thing, customlogging.decorators.couchLoggingDecorator, '123')
+# testobj = customlogging.classes.LoggingWrapper(thing, customlogging.decorators.couchDBLogging, '123')
 # testobj.somefunc('some message')
