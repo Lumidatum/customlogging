@@ -7,7 +7,7 @@ class LoggingWrapper(object):
     # Exclude __init__ by default...
     # Local plain text file by default...
     config = {
-        'exclude': set('__init__'),
+        'exclude': set(['__init__']),
         'include': set(),
         'output_type': constants.LOCAL_PLAIN_TEXT_FILE,
     }
