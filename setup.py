@@ -11,5 +11,8 @@ distutils.core.setup(
     url='',
     download_url='',
     keywords=['logging', 'machine learning'],
-    classifiers=[]
+    classifiers=[],
+    install_requires=[
+        'requests',
+    ]
 )
