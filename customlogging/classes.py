@@ -15,6 +15,8 @@ class LoggingWrapper(object):
     @classmethod
     def setup(
         cls,
+        lumidatum_user_id,
+        lumidatum_model_id,
         couch_db_config=None,
         output_text_file=None,
         output_json_file=None,
@@ -36,18 +38,25 @@ class LoggingWrapper(object):
                 cls.config['include'].add(method)
             cls.config['exclude'] = set()
 
+        # Set user Id and model Id and log for all types
+        cls.config['lumidatum_user_id'] = lumidatum_user_id
+        cls.config['lumidatum_model_id'] = lumidatum_model_id
+
         # NoSQL
         # CouchDB
         if couch_db_config:
             cls.config['output_type'] = constants.REMOTE_COUCH_DB
+            cls.config['remote_host'] = couch_db_config['remote_host']
 
         # JSON file
         elif output_json_file:
-            cls.config['output_type'] constants.LOCAL_JSON_FILE
+            cls.config['output_type'] = constants.LOCAL_JSON_FILE
+            cls.config['output_file'] = output_json_file
 
         # sqllite3 file
         elif output_sqllite3_location:
-            cls.config['output_type'] constants.LOCAL_SQLLITE3
+            cls.config['output_type'] = constants.LOCAL_SQLLITE3
+            cls.config['output_file'] = output_sqlite3_location
 
         # Amazon S3
         # Plain text file
@@ -60,12 +69,22 @@ class LoggingWrapper(object):
 
         # Default to local output text file
         else:
-            cls.config['output_type'] =constants.LOCAL_PLAIN_TEXT_FILE
+            cls.config['output_type'] = constants.LOCAL_PLAIN_TEXT_FILE
+            cls.config['output_file'] = output_text_file if output_text_file else 'customlogging.out'
 
     # TODO: expose methods with appropriate names
     # TODO: 
-    def __init__(self, model_class, *args, **kwargs):
-        decorated_class = decorators.classLoggingDecorator(model_class, type(self).config)
-        self.model = decorated_class(*args, **kwargs)
+    def __init__(self, model_class, selected_decorator, *args, **kwargs):
+        undecorated_model = model_class(*args, **kwargs)
+        # decorated_class = decorators.classLoggingDecorator(model_class, type(self).config)
+        self.model = undecorated_model
+        # self.model = decorated_class(*args, **kwargs)
+
+        for attr in model_class.__dict__:
+            if callable(getattr(model_class, attr)) and attr not in self.config.get('exclude', set()):
+                print repr(undecorated_model)
+                print repr(attr)
+                setattr(self, attr, selected_decorator(getattr(undecorated_model, attr), self.config))
+
 
     # decorate all methods with logging
