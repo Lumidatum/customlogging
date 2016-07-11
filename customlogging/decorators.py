@@ -20,19 +20,19 @@ def couchDBLogging(func, config):
             args_string = repr(args)
             kwargs_string = repr(kwargs)
 
-            # pull necessary info from config
+            # Pull necessary info from config
             remote_host = config['remote_host']
             database = config['database']
 
             url_for_model_call_start = os.path.join(remote_host, database)
 
-            # log to couch start, time, args, kwargs
+            # Log to CouchDB start: time, args, kwargs
             logging_message_id_string = str(uuid.uuid4())
             logging_message = {
                 '_id': logging_message_id_string,
                 'args': args_string,
                 'kwargs': kwargs_string,
-                'start': helpers.generateUtcNowTimeStampString(),
+                'start_time': helpers.generateUtcNowTimeStampString(),
             }
 
             logging_start_proc = multiprocessing.Process(
@@ -40,7 +40,6 @@ def couchDBLogging(func, config):
                 args=(requests.post, url_for_model_call_start, logging_message)
             )
             logging_start_proc.start()
-            # print logging_message
         except Exception as e:
             logging.exception('Pre function call logging failure: {}'.format(e))
 
@@ -49,16 +48,15 @@ def couchDBLogging(func, config):
         try:
             url_for_model_call_end = os.path.join(url_for_model_call_start, logging_message_id_string)
 
-            # log to couch end, time
+            #Log to CouchDB end: time
             logging_end_id_string = str(uuid.uuid4())
-            logging_message['end'] = helpers.generateUtcNowTimeStampString()
+            logging_message['end_time'] = helpers.generateUtcNowTimeStampString()
 
             logging_end_proc = multiprocessing.Process(
                 target=helpers.sendLoggingMessage,
                 args=(requests.put, url_for_model_call_end, logging_message)
             )
             logging_end_proc.start()
-            # print logging_message['end']
         except Exception as e:
             logging.exception('Post function call logging failure: {}'.format(e))
 
