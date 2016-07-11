@@ -6,7 +6,6 @@ import multiprocessing
 import os
 import uuid
 
-# import grequests
 import requests
 
 import constants
