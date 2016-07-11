@@ -86,8 +86,6 @@ class LoggingWrapper(object):
             cls.config['output_type'] = constants.LOCAL_PLAIN_TEXT_FILE
             cls.config['output_file'] = output_text_file if output_text_file else 'customlogging.out'
 
-    # TODO: expose methods with appropriate names
-    # TODO: 
     def __init__(self, model_class, selected_decorator, *args, **kwargs):
         undecorated_model = model_class(*args, **kwargs)
         # decorated_class = decorators.classLoggingDecorator(model_class, type(self).config)
@@ -99,6 +97,3 @@ class LoggingWrapper(object):
                 print repr(undecorated_model)
                 print repr(attr)
                 setattr(self, attr, selected_decorator(getattr(undecorated_model, attr), self.config))
-
-
-    # decorate all methods with logging
