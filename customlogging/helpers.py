@@ -12,8 +12,7 @@ def generateUtcNowTimeStampString():
 
     timestamp = datetime.datetime.utcnow().isoformat()
 
-    return timestamp
-    # return timestamp[:23] + timestamp[26:]
+    return timestamp[:23] + timestamp[26:]
 
 def sendLoggingMessage(method_call, url, message_dict):
     method_call(url, json.dumps(message_dict))
