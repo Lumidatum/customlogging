@@ -72,32 +72,14 @@ def functionLoggingDecorator(func, config):
         string_args = repr(args)
         string_kwargs = repr(kwargs)
         logging.info('[{}] before func: {} args: {} kwargs: {}'.format(datetime.datetime.utcnow().isoformat(), func.__name__, args, kwargs))
-        # logging.info('[{}] before func: {} args: {} kwargs: {}'.format(datetime.datetime.utcnow().isoformat(), func.__name__, args, kwargs))
-        # logging.info(datetime.datetime.utcnow().isoformat(), string_args, string_kwargs)
+
         results = func(*args, **kwargs)
+
         logging.info('[{}] after'.format(datetime.datetime.utcnow().isoformat()))
-        # logging.info(datetime.datetime.utcnow().isoformat(), repr(results), string_args, string_kwargs)
-        # logging.info('[{}] after'.format(datetime.datetime.utcnow().isoformat()))
 
         return results
 
     return wrapper
-
-# TODO, this modifies the class itself, -> on next call it will wrap the wrapped class...
-def classLoggingDecorator(cls, config):
-    # TODO: switch function decorators based on config
-    if config['output_type'] == constants.LOCAL_PAIN_TEXT_FILE:
-        selected_decorator = functionLoggingDecorator
-
-    # Setup logger as needed...
-
-    for attr in cls.__dict__:
-        if callable(getattr(cls, attr)) and attr not in config.get('exclude', set()):
-            print repr(cls)
-            print repr(attr)
-            setattr(cls, attr, selected_decorator(getattr(cls, attr), config))
-
-    return cls
 
 # import logging
 # logging.basicConfig(filename='wrappertest.log', level=logging.INFO)
