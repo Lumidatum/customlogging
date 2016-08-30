@@ -23,7 +23,7 @@ def foo(some_arg, some_kwarg=None):
     return str(some_arg) + str(some_kwarg)
 
 
-def test_couchDB_decorated_function_call():
+def test_couchDB_decorated_function_call_success():
     remote_host = 'http://52.41.176.213:5984'
     test_db = 'test_decorator'
 
