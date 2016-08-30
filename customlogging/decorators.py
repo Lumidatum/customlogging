@@ -14,7 +14,7 @@ import helpers
 
 def couchDBLogging(func, config):
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(logging_message_id_string=None, *args, **kwargs):
         try:
             args_string = repr(args)
             kwargs_string = repr(kwargs)
@@ -26,7 +26,9 @@ def couchDBLogging(func, config):
             url_for_model_call_start = os.path.join(remote_host, database)
 
             # Log to CouchDB start: time, args, kwargs
-            logging_message_id_string = str(uuid.uuid4())
+            if logging_message_id_string == None:
+                logging_message_id_string = str(uuid.uuid4())
+
             logging_message = {
                 '_id': logging_message_id_string,
                 'args': args_string,
@@ -45,7 +47,7 @@ def couchDBLogging(func, config):
         results = func(*args, **kwargs)
 
         try:
-            url_for_model_call_end = os.path.join(url_for_model_call_start, logging_message_id_string)
+            url_for_model_call_endpoint = os.path.join(url_for_model_call_start, logging_message_id_string)
 
             #Log to CouchDB end: time
             logging_end_id_string = str(uuid.uuid4())
@@ -53,7 +55,7 @@ def couchDBLogging(func, config):
 
             logging_end_proc = multiprocessing.Process(
                 target=helpers.sendLoggingMessage,
-                args=(requests.put, url_for_model_call_end, logging_message)
+                args=(requests.put, url_for_model_call_endpoint, logging_message)
             )
             logging_end_proc.start()
         except Exception as e:
