@@ -17,6 +17,7 @@ import requests
 
 from customlogging import decorators
 
+
 # Test function
 def foo(some_arg, some_kwarg=None):
 
