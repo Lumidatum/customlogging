@@ -1,7 +1,12 @@
+import logging
 import os
 import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+logging.basicConfig(
+    filename=os.path.join(os.path.dirname(__file__), 'test_decorators.log'),
+    level=logging.INFO
+)
 
 import ast
 import json
@@ -39,12 +44,25 @@ def test_couchDB_decorated_function_call():
     # Get value from test couchDB
     # TODO: find a better way to wait for write to CouchDB...
     time.sleep(.1)
-    couchDB_response = requests.get(
+    write_response = requests.get(
         os.path.join(remote_host, test_db, test_doc_id)
     )
-    couch_response_object = json.loads(couchDB_response.text)
+    write_response_object = json.loads(write_response.text)
 
-    assert(ast.literal_eval(couch_response_object['args'])[0] == 1)
-    assert(ast.literal_eval(couch_response_object['kwargs'])['some_kwarg'] == 2)
-    assert(couch_response_object['start_time'] is not None)
-    assert(couch_response_object['end_time'] is not None)
+    logging.info(write_response.text)
+
+    assert(ast.literal_eval(write_response_object['args'])[0] == 1)
+    assert(ast.literal_eval(write_response_object['kwargs'])['some_kwarg'] == 2)
+    assert(write_response_object['start_time'] is not None)
+    assert(write_response_object['end_time'] is not None)
+
+    logging.info( os.path.join(remote_host, test_db, test_doc_id + '?rev={}'.format(write_response_object['_rev'])) )
+
+    # Clean up
+    delete_response = requests.delete(
+        os.path.join(remote_host, test_db, test_doc_id + '?rev={}'.format(write_response_object['_rev']))
+    )
+
+    logging.info( write_response_object['_rev'] )
+
+    assert(delete_response.status_code == 200)
