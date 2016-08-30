@@ -53,7 +53,7 @@ class LoggingWrapper(object):
         if couch_db_config:
             cls.config['output_type'] = constants.REMOTE_COUCH_DB
             cls.config['remote_host'] = couch_db_config['remote_host']
-            cls.config['database'] = 'user_{}_model{}'.format(lumidatum_user_id, lumidatum_model_id)
+            cls.config['database'] = 'user_{}_model_{}'.format(lumidatum_user_id, lumidatum_model_id)
 
             # Ensure the database is created in CouchDB
             db_init_proc = multiprocessing.Process(
