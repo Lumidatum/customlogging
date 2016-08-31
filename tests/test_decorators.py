@@ -25,6 +25,8 @@ def foo(some_arg, some_kwarg=None):
 
 
 def test_couchDB_decorated_function_call_success():
+    logging.info('test_couchDB_decorated_function_call_success')
+
     remote_host = 'http://52.41.176.213:5984'
     test_db = 'test_decorator'
 
@@ -42,7 +44,7 @@ def test_couchDB_decorated_function_call_success():
     assert(expected_return_value == actual_return_value)
     # Get value from test couchDB
     # TODO: find a better way to wait for write to CouchDB...
-    time.sleep(.1)
+    time.sleep(.2)
     write_result_response = requests.get(
         os.path.join(remote_host, test_db, test_doc_id)
     )
