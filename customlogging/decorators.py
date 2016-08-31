@@ -15,19 +15,38 @@ import helpers
 def couchDBLogging(func, config):
     @wraps(func)
     def wrapper(logging_message_id_string=None, *args, **kwargs):
+        # Pull necessary info from config
+        remote_host = config['remote_host']
+        database = config['database']
+
+        url_for_model_call_start = os.path.join(remote_host, database)
+
+        if logging_message_id_string == None:
+            logging_message_id_string = str(uuid.uuid4())
+
+        try:
+            # Set status doc to hold up value
+            url_for_model_status = os.path.join(url_for_model_call_start, 'api_status')
+            logging_model_up_proc = multiprocessing.Process(
+                target=helpers.sendLoggingMessage,
+                args=(
+                    requests.put,
+                    url_for_model_status,
+                    {
+                        'status': constants.MODEL_API_STATUS_UP,
+                        'status_update_time': helpers.generateUtcNowTimeStampString(),
+                    }
+                )
+            )
+            logging_model_up_proc.start()
+        except Exception as e:
+            logging.exception('Pre function call logging failure, unable to set API UP status: {}'.format(e))
+
         try:
             args_string = repr(args)
             kwargs_string = repr(kwargs)
 
-            # Pull necessary info from config
-            remote_host = config['remote_host']
-            database = config['database']
-
-            url_for_model_call_start = os.path.join(remote_host, database)
-
             # Log to CouchDB start: time, args, kwargs
-            if logging_message_id_string == None:
-                logging_message_id_string = str(uuid.uuid4())
 
             logging_message = {
                 '_id': logging_message_id_string,
@@ -44,14 +63,46 @@ def couchDBLogging(func, config):
         except Exception as e:
             logging.exception('Pre function call logging failure: {}'.format(e))
 
-        results = func(*args, **kwargs)
+        url_for_model_call_endpoint = os.path.join(url_for_model_call_start, logging_message_id_string)
+
+        results = None
 
         try:
-            url_for_model_call_endpoint = os.path.join(url_for_model_call_start, logging_message_id_string)
+            results = func(*args, **kwargs)
+        except Exception as e:
+            logging.exception('Inner function call failure: {}'.format(e))
 
-            #Log to CouchDB end: time
-            logging_end_id_string = str(uuid.uuid4())
+            logging_message['exception'] = e.message
             logging_message['end_time'] = helpers.generateUtcNowTimeStampString()
+            logging_message['model_satus'] = constants.MODEL_API_STATUS_DOWN
+
+            logging_exception_proc = multiprocessing.Process(
+                target=helpers.sendLoggingMessage,
+                args=(requests.put, url_for_model_call_endpoint, logging_message)
+            )
+            logging_end_proc.start()
+
+            # Set status doc to hold down value
+            url_for_model_status = os.path.join(url_for_model_call_start, 'api_status')
+            logging_model_down_proc = multiprocessing.Process(
+                target=helpers.sendLoggingMessage,
+                args=(
+                    requests.put,
+                    url_for_model_status,
+                    {
+                        'status': constants.MODEL_API_STATUS_DOWN,
+                        'status_update_time': helpers.generateUtcNowTimeStampString(),
+                    }
+                )
+            )
+            logging_model_down_proc.start()
+
+            raise e
+
+        try:
+            #Log to CouchDB end: time
+            logging_message['end_time'] = helpers.generateUtcNowTimeStampString()
+            logging_message['model_satus'] = constants.MODEL_API_STATUS_UP
 
             logging_end_proc = multiprocessing.Process(
                 target=helpers.sendLoggingMessage,
