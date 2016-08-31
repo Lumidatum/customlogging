@@ -62,6 +62,6 @@ def test_couchDB_decorated_function_call_success():
         os.path.join(remote_host, test_db, test_doc_id + '?rev={}'.format(write_result_response_object['_rev']))
     )
 
-    logging.info( write_result_response_object['_rev'] )
+    logging.info(write_result_response_object['_rev'])
 
     assert(delete_response.status_code == 200)
