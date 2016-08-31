@@ -17,9 +17,10 @@ import requests
 
 from customlogging import classes
 from customlogging import constants
+from customlogging import decorators
 
 
-def FooClass(object):
+class FooClass(object):
     def __init__(self):
         pass
 
@@ -59,7 +60,58 @@ def test_class_wrapper_couch_db_setup_dict():
     assert(classes.LoggingWrapper.config.get('output_type') == constants.REMOTE_COUCH_DB)
 
 def test_class_wrapper_success():
-    pass
+    couch_db_config = {
+        'remote_host': REMOTE_HOST,
+    }
+
+    test_user_id = 5
+    test_model_id = 441
+
+    classes.LoggingWrapper.setup(
+        test_user_id,
+        test_model_id,
+        couch_db_config=couch_db_config
+    )
+
+    wrapped_class_instance = classes.LoggingWrapper(
+        FooClass,
+        decorators.couchDBLogging
+    )
+    test_doc_id = str(uuid.uuid4())
+    expected_return_value = '12'
+
+    regular_arg = 1
+    keyword_arg = 2
+
+    actual_return_value = wrapped_class_instance.AnIncludedMethod(
+        test_doc_id,
+        regular_arg,
+        first_kwarg=keyword_arg
+    )
+
+    assert(expected_return_value == actual_return_value)
+
+    time.sleep(.1)
+    write_result_response = requests.get(
+        os.path.join(REMOTE_HOST, 'user_{}_model_{}'.format(test_user_id, test_model_id), test_doc_id)
+    )
+    write_result_response_object = json.loads(write_result_response.text)
+
+    logging.info(write_result_response.text)
+
+    assert(ast.literal_eval(write_result_response_object['args'])[0] == 1)
+    assert(ast.literal_eval(write_result_response_object['kwargs'])['first_kwarg'] == 2)
+    assert(write_result_response_object['start_time'] is not None)
+    assert(write_result_response_object['end_time'] is not None)
+
+    # Clean up
+    delete_response = requests.delete(
+        os.path.join(REMOTE_HOST, 'user_{}_model_{}'.format(test_user_id, test_model_id), test_doc_id + '?rev={}'.format(write_result_response_object['_rev']))
+    )
+
+    logging.info(write_result_response_object['_rev'])
+
+    assert(delete_response.status_code == 200)
 
 def test_class_wrapper_excluded():
     pass
