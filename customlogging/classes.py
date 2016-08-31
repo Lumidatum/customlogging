@@ -97,3 +97,5 @@ class LoggingWrapper(object):
                 print repr(undecorated_model)
                 print repr(attr)
                 setattr(self, attr, selected_decorator(getattr(undecorated_model, attr), self.config))
+            elif callable(getattr(model_class, attr)):
+                setattr(self, attr, getattr(undecorated_model, attr))

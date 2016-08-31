@@ -114,4 +114,45 @@ def test_class_wrapper_success():
     assert(delete_response.status_code == 200)
 
 def test_class_wrapper_excluded():
-    pass
+    couch_db_config = {
+        'remote_host': REMOTE_HOST,
+    }
+    excluded_methods = [
+        'AnExcludedMethod',
+    ]
+
+    test_user_id = 5
+    test_model_id = 441
+
+    classes.LoggingWrapper.setup(
+        test_user_id,
+        test_model_id,
+        couch_db_config=couch_db_config,
+        exclude_methods=excluded_methods
+    )
+
+    wrapped_class_instance = classes.LoggingWrapper(
+        FooClass,
+        decorators.couchDBLogging
+    )
+    expected_return_value = '12'
+
+    regular_arg = 1
+    keyword_arg = 2
+
+    actual_return_value = wrapped_class_instance.AnExcludedMethod(
+        # test_doc_id,
+        regular_arg,
+        first_kwarg=keyword_arg
+    )
+
+    assert(expected_return_value == actual_return_value)
+
+    database_response = requests.get(
+        os.path.join(REMOTE_HOST, 'user_{}_model_{}'.format(test_user_id, test_model_id))
+    )
+    database_response_object = json.loads(database_response.text)
+
+    logging.info(database_response.text)
+
+    assert(database_response_object['doc_count'] == 0)
