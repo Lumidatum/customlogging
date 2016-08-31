@@ -9,6 +9,7 @@ logging.basicConfig(
 )
 
 import ast
+import getpass
 import json
 import time
 import uuid
@@ -21,12 +22,13 @@ from customlogging import decorators
 
 
 class FooClass(object):
-    def __init__(self):
-        pass
+    def __init__(self, some_val, some_key_val=2):
+        self.some_val = some_val
+        self.some_key_val = some_key_val
 
     def AnIncludedMethod(self, first_arg, first_kwarg=None):
 
-        return str(first_arg) + str(first_kwarg)
+        return str(first_arg) + str(first_kwarg) + str(self.some_val) + str(self.some_key_val)
 
     def AnExcludedMethod(self, first_arg, first_kwarg=None):
 
@@ -37,6 +39,8 @@ REMOTE_HOST = 'http://52.41.176.213:5984'
 
 
 def test_class_wrapper_couch_db_setup_dict():
+    logging.info('test_class_wrapper_couch_db_setup_dict')
+
     couch_db_config = {
         'remote_host': REMOTE_HOST,
     }
@@ -56,10 +60,12 @@ def test_class_wrapper_couch_db_setup_dict():
 
     assert(classes.LoggingWrapper.config.get('remote_host') == REMOTE_HOST)
     # Default behavior is to set user_{user_id}_model_{model_id} given at setup()
-    assert(classes.LoggingWrapper.config.get('database') == 'user_5_model_441')
+    assert(classes.LoggingWrapper.config.get('database') == '{}_user_5_model_441'.format(getpass.getuser()))
     assert(classes.LoggingWrapper.config.get('output_type') == constants.REMOTE_COUCH_DB)
 
 def test_class_wrapper_success():
+    logging.info('test_class_wrapper_success')
+
     couch_db_config = {
         'remote_host': REMOTE_HOST,
     }
@@ -75,10 +81,12 @@ def test_class_wrapper_success():
 
     wrapped_class_instance = classes.LoggingWrapper(
         FooClass,
-        decorators.couchDBLogging
+        decorators.couchDBLogging,
+        3,
+        4
     )
     test_doc_id = str(uuid.uuid4())
-    expected_return_value = '12'
+    expected_return_value = '1234'
 
     regular_arg = 1
     keyword_arg = 2
@@ -91,9 +99,9 @@ def test_class_wrapper_success():
 
     assert(expected_return_value == actual_return_value)
 
-    time.sleep(.1)
+    time.sleep(.2)
     write_result_response = requests.get(
-        os.path.join(REMOTE_HOST, 'user_{}_model_{}'.format(test_user_id, test_model_id), test_doc_id)
+        os.path.join(REMOTE_HOST, '{}_user_{}_model_{}'.format(getpass.getuser(), test_user_id, test_model_id), test_doc_id)
     )
     write_result_response_object = json.loads(write_result_response.text)
 
@@ -106,7 +114,7 @@ def test_class_wrapper_success():
 
     # Clean up
     delete_response = requests.delete(
-        os.path.join(REMOTE_HOST, 'user_{}_model_{}'.format(test_user_id, test_model_id), test_doc_id + '?rev={}'.format(write_result_response_object['_rev']))
+        os.path.join(REMOTE_HOST, '{}_user_{}_model_{}'.format(getpass.getuser(), test_user_id, test_model_id), test_doc_id + '?rev={}'.format(write_result_response_object['_rev']))
     )
 
     logging.info(write_result_response_object['_rev'])
@@ -114,6 +122,8 @@ def test_class_wrapper_success():
     assert(delete_response.status_code == 200)
 
 def test_class_wrapper_excluded():
+    logging.info('test_class_wrapper_excluded')
+
     couch_db_config = {
         'remote_host': REMOTE_HOST,
     }
@@ -133,7 +143,8 @@ def test_class_wrapper_excluded():
 
     wrapped_class_instance = classes.LoggingWrapper(
         FooClass,
-        decorators.couchDBLogging
+        decorators.couchDBLogging,
+        3
     )
     expected_return_value = '12'
 
@@ -149,10 +160,11 @@ def test_class_wrapper_excluded():
     assert(expected_return_value == actual_return_value)
 
     database_response = requests.get(
-        os.path.join(REMOTE_HOST, 'user_{}_model_{}'.format(test_user_id, test_model_id))
+        os.path.join(REMOTE_HOST, '{}_user_{}_model_{}'.format(getpass.getuser(), test_user_id, test_model_id))
     )
     database_response_object = json.loads(database_response.text)
 
     logging.info(database_response.text)
 
-    assert(database_response_object['doc_count'] == 0)
+    # Assuming all docs are cleaned up after test, except the one for model API status.
+    assert(database_response_object['doc_count'] == 1)
