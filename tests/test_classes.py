@@ -121,6 +121,77 @@ def test_class_wrapper_success():
 
     assert(delete_response.status_code == 200)
 
+def test_class_wrapper_multi_concurrent_success():
+    logging.warn('test_class_wrapper_multi_concurrent_success')
+
+    couch_db_config = {
+        'remote_host': REMOTE_HOST,
+    }
+
+    test_user_id = 5
+    test_model_id = 441
+
+    classes.LoggingWrapper.setup(
+        test_user_id,
+        test_model_id,
+        couch_db_config=couch_db_config
+    )
+
+    wrapped_class_instance = classes.LoggingWrapper(
+        FooClass,
+        decorators.couchDBLogging,
+        3,
+        4
+    )
+    test_doc_ids = [
+        str(uuid.uuid4()),
+        str(uuid.uuid4()),
+        str(uuid.uuid4()),
+        str(uuid.uuid4()),
+        str(uuid.uuid4()),
+    ]
+    expected_return_value = '1234'
+
+    regular_arg = 1
+    keyword_arg = 2
+
+    actual_return_values = list()
+    for test_doc_id in test_doc_ids:
+        actual_return_values.append(
+            wrapped_class_instance.AnIncludedMethod(
+                test_doc_id,
+                regular_arg,
+                first_kwarg=keyword_arg
+            )
+        )
+
+    for actual_return_value in actual_return_values:
+        assert(expected_return_value == actual_return_value)
+
+    time.sleep(.2)
+    for test_doc_id in test_doc_ids:
+        write_result_response = requests.get(
+            os.path.join(REMOTE_HOST, '{}_user_{}_model_{}'.format(getpass.getuser(), test_user_id, test_model_id), test_doc_id)
+        )
+        write_result_response_object = json.loads(write_result_response.text)
+
+        logging.info(write_result_response.text)
+
+        assert(ast.literal_eval(write_result_response_object['args'])[0] == 1)
+        assert(ast.literal_eval(write_result_response_object['kwargs'])['first_kwarg'] == 2)
+        assert(write_result_response_object['start_time'] is not None)
+        assert(write_result_response_object['end_time'] is not None)
+
+        # Clean up
+        delete_response = requests.delete(
+            os.path.join(REMOTE_HOST, '{}_user_{}_model_{}'.format(getpass.getuser(), test_user_id, test_model_id), test_doc_id + '?rev={}'.format(write_result_response_object['_rev']))
+        )
+
+        logging.info(write_result_response_object['_rev'])
+
+        assert(delete_response.status_code == 200)
+
+
 def test_class_wrapper_excluded():
     logging.warn('test_class_wrapper_excluded')
 
@@ -168,3 +239,4 @@ def test_class_wrapper_excluded():
 
     # Assuming all docs are cleaned up after test, except the one for model API status.
     assert(database_response_object['doc_count'] == 1)
+
