@@ -34,7 +34,7 @@ def foo(some_arg, some_kwarg=None):
 
 def errorRaisingFunc(some_arg, some_kwarg=None):
 
-    raise Exception('Test exception')
+    raise ValueError('Test exception')
 
 # Helper function for testing running logging call
 def makeFunctionCall(decorated_function, message_queue, couch_db_config, expected_return_value, some_arg, some_kwarg=None, ):
@@ -42,7 +42,7 @@ def makeFunctionCall(decorated_function, message_queue, couch_db_config, expecte
 
     test_doc_id = str(uuid.uuid4())
 
-    message_queue.put((test_doct_id, some_arg, some_kwarg))
+    if message_queue: message_queue.put((test_doct_id, some_arg, some_kwarg))
     actual_return_value = decorated_function(test_doc_id, some_arg, some_kwarg=some_kwarg)
 
     assert(expected_return_value == actual_return_value)
@@ -152,3 +152,18 @@ def test_couchDB_decorated_function_call_multi_concurrent_success():
     logging.error(message_queue.empty())
     while not message_queue.empty():
         cleanUpFunctionCall(COUCH_DB_CONFIG, *(message_queue.get()))
+
+def test_couchDB_decorated_fuction_call_exception_logged():
+    logging.warn('test_couchDB_decorated_function_call_multi_concurrent_success')
+
+    decorated_function = decorators.couchDBLogging(errorRaisingFunc, COUCH_DB_CONFIG)
+
+    exception_raising_proc = multiprocessing.Process(
+            target=makeFunctionCall,
+            args=(decorated_function, None, COUCH_DB_CONFIG, '02', 0, 2),
+    )
+    exception_raising_proc.start()
+
+    assert(exception_raising_proc.exitcode != 0)
+
+    # Check for Exception logs...

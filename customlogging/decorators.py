@@ -42,6 +42,8 @@ def couchDBLogging(func, config):
         except Exception as e:
             logging.exception('Pre function call logging failure, unable to set API UP status: {}'.format(e))
 
+        logging_message = None
+
         try:
             args_string = repr(args)
             kwargs_string = repr(kwargs)
@@ -76,34 +78,37 @@ def couchDBLogging(func, config):
         except Exception as e:
             logging.exception('Inner function call failure: {}'.format(e))
 
-            logging_message['exception'] = e.message
-            logging_message['end_time'] = helpers.generateUtcNowTimeStampString()
-            logging_message['model_status'] = constants.MODEL_API_STATUS_DOWN
+            try:
+                logging_message['exception'] = e.message
+                logging_message['end_time'] = helpers.generateUtcNowTimeStampString()
+                logging_message['model_status'] = constants.MODEL_API_STATUS_DOWN
 
-            logging_exception_proc = multiprocessing.Process(
-                target=helpers.sendLoggingMessage,
-                args=(
-                    requests.put,
-                    url_for_model_call_endpoint,
-                    logging_message
+                logging_exception_proc = multiprocessing.Process(
+                    target=helpers.sendLoggingMessage,
+                    args=(
+                        requests.put,
+                        url_for_model_call_endpoint,
+                        logging_message
+                    )
                 )
-            )
-            logging_exception_proc.start()
+                logging_exception_proc.start()
 
-            # Set status doc to hold down value
-            url_for_model_status = os.path.join(url_for_model_call_start, 'api_status')
-            logging_model_down_proc = multiprocessing.Process(
-                target=helpers.sendLoggingMessage,
-                args=(
-                    requests.put,
-                    url_for_model_status,
-                    {
-                        'status': constants.MODEL_API_STATUS_DOWN,
-                        'status_update_time': helpers.generateUtcNowTimeStampString(),
-                    }
+                # Set status doc to hold down value
+                url_for_model_status = os.path.join(url_for_model_call_start, 'api_status')
+                logging_model_down_proc = multiprocessing.Process(
+                    target=helpers.sendLoggingMessage,
+                    args=(
+                        requests.put,
+                        url_for_model_status,
+                        {
+                            'status': constants.MODEL_API_STATUS_DOWN,
+                            'status_update_time': helpers.generateUtcNowTimeStampString(),
+                        }
+                    )
                 )
-            )
-            logging_model_down_proc.start()
+                logging_model_down_proc.start()
+            except Exception as ee:
+                logging.exception('Logging failure on function exception: {}'.format(ee))
 
             raise Exception('Decorated function call fail: {}: {}'.format(func, e))
 
