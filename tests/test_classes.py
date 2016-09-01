@@ -239,4 +239,3 @@ def test_class_wrapper_excluded():
 
     # Assuming all docs are cleaned up after test, except the one for model API status.
     assert(database_response_object['doc_count'] == 1)
-
