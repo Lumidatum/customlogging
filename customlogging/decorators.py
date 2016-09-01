@@ -78,7 +78,7 @@ def couchDBLogging(func, config):
 
             logging_message['exception'] = e.message
             logging_message['end_time'] = helpers.generateUtcNowTimeStampString()
-            logging_message['model_satus'] = constants.MODEL_API_STATUS_DOWN
+            logging_message['model_status'] = constants.MODEL_API_STATUS_DOWN
 
             logging_exception_proc = multiprocessing.Process(
                 target=helpers.sendLoggingMessage,
@@ -110,7 +110,7 @@ def couchDBLogging(func, config):
         try:
             #Log to CouchDB end: time
             logging_message['end_time'] = helpers.generateUtcNowTimeStampString()
-            logging_message['model_satus'] = constants.MODEL_API_STATUS_UP
+            logging_message['model_status'] = constants.MODEL_API_STATUS_UP
 
             logging_end_proc = multiprocessing.Process(
                 target=helpers.sendLoggingMessage,
