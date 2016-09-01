@@ -64,7 +64,7 @@ def cleanUpFunctionCall(couch_db_config, test_doc_id, test_arg_value, test_kwarg
 def test_couchDB_decorated_function_call_success():
     logging.warn('test_couchDB_decorated_function_call_success')
 
-    remote_host = 'http://52.41.176.213:5984'
+    remote_host = 'http://ec2-52-41-176-213.us-west-2.compute.amazonaws.com:5984'
     test_db = 'test_decorator'
 
     couch_db_config = {
@@ -108,7 +108,7 @@ def test_couchDB_decorated_function_call_success():
 def test_couchDB_decorated_function_call_multi_concurrent_success():
     logging.warn('test_couchDB_decorated_function_call_multi_concurrent_success')
 
-    remote_host = 'http://52.41.176.213:5984'
+    remote_host = 'http://ec2-52-41-176-213.us-west-2.compute.amazonaws.com:5984'
     test_db = 'test_decorator'
 
     couch_db_config = {

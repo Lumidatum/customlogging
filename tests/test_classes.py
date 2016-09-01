@@ -35,7 +35,7 @@ class FooClass(object):
         return str(first_arg) + str(first_kwarg)
 
 
-REMOTE_HOST = 'http://52.41.176.213:5984'
+REMOTE_HOST = 'http://ec2-52-41-176-213.us-west-2.compute.amazonaws.com:5984'
 
 
 def test_class_wrapper_couch_db_setup_dict():
