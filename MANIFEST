@@ -7,3 +7,5 @@ customlogging/configuration.py
 customlogging/constants.py
 customlogging/decorators.py
 customlogging/helpers.py
+tests/test_classes.py
+tests/test_decorators.py
