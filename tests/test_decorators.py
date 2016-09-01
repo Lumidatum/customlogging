@@ -19,10 +19,22 @@ import requests
 from customlogging import decorators
 
 
+REMOTE_HOST = 'http://ec2-52-41-176-213.us-west-2.compute.amazonaws.com:5984'
+TEST_DB = 'test_decorator'
+
+COUCH_DB_CONFIG = {
+    'remote_host': REMOTE_HOST,
+    'database': TEST_DB,
+}
+
 # Test function
 def foo(some_arg, some_kwarg=None):
 
     return str(some_arg) + str(some_kwarg)
+
+def errorRaisingFunc(some_arg, some_kwarg=None):
+
+    raise Exception('Test exception')
 
 # Helper function for testing running logging call
 def makeFunctionCall(decorated_function, message_queue, couch_db_config, expected_return_value, some_arg, some_kwarg=None, ):
@@ -42,7 +54,7 @@ def cleanUpFunctionCall(couch_db_config, test_doc_id, test_arg_value, test_kwarg
     # TODO: find a better way to wait for write to CouchDB...
     # time.sleep(.2)
     write_result_response = requests.get(
-        os.path.join(couch_db_config['remote_host'], couch_db_config['database'], test_doc_id)
+        os.path.join(COUCH_DB_CONFIG['remote_host'], COUCH_DB_CONFIG['database'], test_doc_id)
     )
     write_result_response_object = json.loads(write_result_response.text)
 
@@ -53,26 +65,24 @@ def cleanUpFunctionCall(couch_db_config, test_doc_id, test_arg_value, test_kwarg
     assert(write_result_response_object['start_time'] is not None)
     assert(write_result_response_object['end_time'] is not None)
 
-    logging.info( os.path.join(couch_db_config['remote_host'], couch_db_config['database'], test_doc_id + '?rev={}'.format(write_result_response_object['_rev'])) )
+    logging.info( os.path.join(COUCH_DB_CONFIG['remote_host'], COUCH_DB_CONFIG['database'], test_doc_id + '?rev={}'.format(write_result_response_object['_rev'])) )
 
     # Clean up
     delete_response = requests.delete(
-        os.path.join(couch_db_config['remote_host'], couch_db_config['database'], test_doc_id + '?rev={}'.format(write_result_response_object['_rev']))
+        os.path.join(COUCH_DB_CONFIG['remote_host'], COUCH_DB_CONFIG['database'], test_doc_id + '?rev={}'.format(write_result_response_object['_rev']))
     )
 
 
 def test_couchDB_decorated_function_call_success():
     logging.warn('test_couchDB_decorated_function_call_success')
 
-    remote_host = 'http://ec2-52-41-176-213.us-west-2.compute.amazonaws.com:5984'
-    test_db = 'test_decorator'
 
-    couch_db_config = {
-        'remote_host': remote_host,
-        'database': test_db,
+    COUCH_DB_CONFIG = {
+        'remote_host': REMOTE_HOST,
+        'database': TEST_DB,
     }
 
-    decorated_foo = decorators.couchDBLogging(foo, couch_db_config)
+    decorated_foo = decorators.couchDBLogging(foo, COUCH_DB_CONFIG)
     expected_return_value = '12'
     test_doc_id = str(uuid.uuid4())
 
@@ -83,7 +93,7 @@ def test_couchDB_decorated_function_call_success():
     # TODO: find a better way to wait for write to CouchDB...
     time.sleep(.2)
     write_result_response = requests.get(
-        os.path.join(remote_host, test_db, test_doc_id)
+        os.path.join(REMOTE_HOST, TEST_DB, test_doc_id)
     )
     write_result_response_object = json.loads(write_result_response.text)
 
@@ -94,11 +104,11 @@ def test_couchDB_decorated_function_call_success():
     assert(write_result_response_object['start_time'] is not None)
     assert(write_result_response_object['end_time'] is not None)
 
-    logging.info( os.path.join(remote_host, test_db, test_doc_id + '?rev={}'.format(write_result_response_object['_rev'])) )
+    logging.info( os.path.join(REMOTE_HOST, TEST_DB, test_doc_id + '?rev={}'.format(write_result_response_object['_rev'])) )
 
     # Clean up
     delete_response = requests.delete(
-        os.path.join(remote_host, test_db, test_doc_id + '?rev={}'.format(write_result_response_object['_rev']))
+        os.path.join(REMOTE_HOST, TEST_DB, test_doc_id + '?rev={}'.format(write_result_response_object['_rev']))
     )
 
     logging.info(write_result_response_object['_rev'])
@@ -108,37 +118,29 @@ def test_couchDB_decorated_function_call_success():
 def test_couchDB_decorated_function_call_multi_concurrent_success():
     logging.warn('test_couchDB_decorated_function_call_multi_concurrent_success')
 
-    remote_host = 'http://ec2-52-41-176-213.us-west-2.compute.amazonaws.com:5984'
-    test_db = 'test_decorator'
-
-    couch_db_config = {
-        'remote_host': remote_host,
-        'database': test_db,
-    }
-
-    decorated_foo = decorators.couchDBLogging(foo, couch_db_config)
+    decorated_foo = decorators.couchDBLogging(foo, COUCH_DB_CONFIG)
     message_queue = multiprocessing.Queue()
 
     subprocs = [
         multiprocessing.Process(
             target=makeFunctionCall,
-            args=(decorated_foo, message_queue, couch_db_config, '02', 0, 2),
+            args=(decorated_foo, message_queue, COUCH_DB_CONFIG, '02', 0, 2),
         ),
         multiprocessing.Process(
             target=makeFunctionCall,
-            args=(decorated_foo, message_queue, couch_db_config, '12', 1, 2),
+            args=(decorated_foo, message_queue, COUCH_DB_CONFIG, '12', 1, 2),
         ),
         multiprocessing.Process(
             target=makeFunctionCall,
-            args=(decorated_foo, message_queue, couch_db_config, '22', 2, 2),
+            args=(decorated_foo, message_queue, COUCH_DB_CONFIG, '22', 2, 2),
         ),
         multiprocessing.Process(
             target=makeFunctionCall,
-            args=(decorated_foo, message_queue, couch_db_config, '32', 3, 2),
+            args=(decorated_foo, message_queue, COUCH_DB_CONFIG, '32', 3, 2),
         ),
         multiprocessing.Process(
             target=makeFunctionCall,
-            args=(decorated_foo, message_queue, couch_db_config, '42', 4, 2),
+            args=(decorated_foo, message_queue, COUCH_DB_CONFIG, '42', 4, 2),
         ),
     ]
 
@@ -149,5 +151,4 @@ def test_couchDB_decorated_function_call_multi_concurrent_success():
     logging.error('start cleaning...')
     logging.error(message_queue.empty())
     while not message_queue.empty():
-        cleanUpFunctionCall(couch_db_config, *(message_queue.get()))
-
+        cleanUpFunctionCall(COUCH_DB_CONFIG, *(message_queue.get()))
