@@ -57,7 +57,11 @@ def couchDBLogging(func, config):
 
             logging_start_proc = multiprocessing.Process(
                 target=helpers.sendLoggingMessage,
-                args=(requests.post, url_for_model_call_start, logging_message)
+                args=(
+                    requests.post,
+                    url_for_model_call_start,
+                    logging_message
+                )
             )
             logging_start_proc.start()
         except Exception as e:
@@ -78,7 +82,11 @@ def couchDBLogging(func, config):
 
             logging_exception_proc = multiprocessing.Process(
                 target=helpers.sendLoggingMessage,
-                args=(requests.put, url_for_model_call_endpoint, logging_message)
+                args=(
+                    requests.put,
+                    url_for_model_call_endpoint,
+                    logging_message
+                )
             )
             logging_exception_proc.start()
 
@@ -97,7 +105,7 @@ def couchDBLogging(func, config):
             )
             logging_model_down_proc.start()
 
-            raise e
+            raise Exception('Decorated function call fail: {}: {}'.format(func, e))
 
         try:
             #Log to CouchDB end: time
