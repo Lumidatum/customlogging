@@ -80,7 +80,7 @@ def couchDBLogging(func, config):
                 target=helpers.sendLoggingMessage,
                 args=(requests.put, url_for_model_call_endpoint, logging_message)
             )
-            logging_end_proc.start()
+            logging_exception_proc.start()
 
             # Set status doc to hold down value
             url_for_model_status = os.path.join(url_for_model_call_start, 'api_status')
