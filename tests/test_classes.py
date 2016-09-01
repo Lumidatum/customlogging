@@ -4,7 +4,7 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 logging.basicConfig(
-    filename=os.path.join(os.path.dirname(__file__), 'test_classes.log'),
+    filename=os.path.join(os.path.dirname(__file__), 'test.log'),
     level=logging.INFO
 )
 
@@ -39,7 +39,7 @@ REMOTE_HOST = 'http://52.41.176.213:5984'
 
 
 def test_class_wrapper_couch_db_setup_dict():
-    logging.info('test_class_wrapper_couch_db_setup_dict')
+    logging.warn('test_class_wrapper_couch_db_setup_dict')
 
     couch_db_config = {
         'remote_host': REMOTE_HOST,
@@ -64,7 +64,7 @@ def test_class_wrapper_couch_db_setup_dict():
     assert(classes.LoggingWrapper.config.get('output_type') == constants.REMOTE_COUCH_DB)
 
 def test_class_wrapper_success():
-    logging.info('test_class_wrapper_success')
+    logging.warn('test_class_wrapper_success')
 
     couch_db_config = {
         'remote_host': REMOTE_HOST,
@@ -122,7 +122,7 @@ def test_class_wrapper_success():
     assert(delete_response.status_code == 200)
 
 def test_class_wrapper_excluded():
-    logging.info('test_class_wrapper_excluded')
+    logging.warn('test_class_wrapper_excluded')
 
     couch_db_config = {
         'remote_host': REMOTE_HOST,
